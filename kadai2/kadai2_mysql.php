@@ -20,7 +20,7 @@
         //$create = $dbh->query($createsql);
 
 
-    //データの挿入
+/*     //データの挿入
         $name = 'p1';
         $comment = '最初のコメント';
         $update_time = date("Y-m-d" ,time());
@@ -40,8 +40,36 @@
         $stmt -> bindValue(':update_datetime', $update_time);
         $stmt -> bindValue(':pass', $pass);
         //組み込んだ後にSQL文を実行
+        $stmt -> execute(); */
+    
+    //複数データの一括挿入
+        $update_time = date("Y-m-d" ,time());
+        $aryInsert = [];
+        $aryInsert[] = ['name' => 'hideki', 'comment' => 'yoro', 'update_datetime' => $update_time, 'pass' => 'abc'];
+        $sql = "INSERT INTO posts (
+            name, comment, update_datetime , pass
+        ) VALUES";
+
+        $arySql1 = [];
+        foreach($aryInsert as $key1 => $val1){
+            $arySql2 = [];
+            foreach($val1 as $key2 => $val2){
+                $arySql2[] = ':'.$key2.$key1;
+            }
+            $arySql1[] = '('.implode(',', $arySql2).')';
+        }
+
+        $sql .= implode(',', $arySql1);
+
+        //bind処理
+        $stmt = $dbh -> prepare($sql);
+        foreach($aryInsert as $key => $val1) {
+            foreach($val1 as $key2 => $val2) {
+                $stmt -> bindValue(':'.$key2.$key1, $val2);
+            }
+        }
+
         $stmt -> execute();
-        
 
     //データの取得
         $stmt = $dbh->query("SELECT * FROM posts");
