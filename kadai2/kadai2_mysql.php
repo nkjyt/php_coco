@@ -7,26 +7,24 @@
 
     try {
         $dbh = new PDO($dsn, $username, $password);
+        $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         //SQL作成
         $createsql = 'CREATE TABLE posts (
             id INT(11) AUTO_INCREMENT PRIMARY KEY,
-            name TEXT NOT NULL,
-            comment TEXT NOT NULL,
+            name VARCHAR(20),
+            comment VARCHAR(100),
             update_datetime DATETIME,
-            pass TEXT NOT NULL,
+            pass VARCHAR(20)
         ) engine=innodb default charset=utf8';
+        //$create = $dbh->query($createsql);
 
-        $res = $dbh->query($createsql);
+        //データの取得
+        $stmt = $dbh->query("SELECT * FROM posts");
+        $results = $stmt->fetchall(PDO::FETCH_ASSOC);
+        echo var_dump($results);
 
-        //テーブルの存在確認
-        $sql = "SELECT 1 FROM information_schema.tables WHERE table_name = 'posts'";
-        $query = $dbh->query($sql);
-        $data = $query->fetchAll(PDO::FETCH_ASSOC);
-        if($data['0']['?column?'] == 1){
-          echo "テーブルが存在しました。";
-        }
-        //実行
+        //データの追加
         
         
 
