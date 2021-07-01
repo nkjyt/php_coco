@@ -19,6 +19,11 @@
         ) engine=innodb default charset=utf8';
         //$create = $dbh->query($createsql);
 
+        //テーブル一覧
+            $stmt = $dbh -> query('SHOW TABLES');
+            while($re = $stmt -> fetch(PDO::FETCH_ASSOC)){
+                var_dump($re);
+            }
 
 /*     //データの挿入
         $name = 'p1';
@@ -89,13 +94,14 @@
         $stmt -> execute();
          */
 
-    //データの削除
+/*     //データの削除
         $id = 1;
         $sql = "DELETE FROM posts WHERE id = :id";
         $stmt = $dbh -> prepare($sql);
         $stmt -> bindParam(':id', $id);
 
         $stmt -> execute();
+ */
 
     //データの全件取得
         $stmt = $dbh->query("SELECT * FROM posts");
