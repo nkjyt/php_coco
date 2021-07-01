@@ -240,7 +240,35 @@ if( !empty($_POST['btn_submit'])) {
         $comment = $_POST['comment'];
         $date = date("Y-m-d" ,time());
         $password = $_POST['password'];
-        
+        $sql = "INSERT INTO posts (
+            name, comment, update_datetime , pass
+        ) VALUES (
+            :name, :comment, :update_datetime, :pass
+        )";
+
+        //実行準備
+        $stmt = $dbh -> prepare($sql);
+        //クエリのパラメータごとに値を組み込む
+        $stmt -> bindValue(':name', $name);
+        $stmt -> bindValue(':comment', $comment);
+        $stmt -> bindValue(':update_datetime', $date);
+        $stmt -> bindValue(':pass', $password);
+        //組み込んだ後にSQL文を実行
+        $stmt -> execute();
+    }
+
+    function update( $id ) {
+        $db = connectDB();
+
+    }
+
+    function delete($id) {
+        $db = connectDB();
+        $sql = "DELETE FROM posts WHERE id = :id";
+        $stmt = $dbh -> prepare($sql);
+        $stmt -> bindParam(':id', $id);
+
+        $stmt -> execute();
     }
 
 ?>
