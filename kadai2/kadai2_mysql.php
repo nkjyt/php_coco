@@ -42,7 +42,7 @@
         //組み込んだ後にSQL文を実行
         $stmt -> execute(); */
     
-    //複数データの一括挿入
+/*     //複数データの一括挿入
         $update_time = date("Y-m-d" ,time());
         $aryInsert = [];
         $aryInsert[] = ['name' => 'hideki', 'comment' => 'yoro', 'update_datetime' => $update_time, 'pass' => 'abc'];
@@ -69,9 +69,27 @@
             }
         }
 
-        $stmt -> execute();
+        $stmt -> execute(); */
+    
+    //データの更新
+        $id = 1;
+        $name = 'p1_new';
+        $comment = 'コメント編集';
+        $update_time = date("Y-m-d" ,time());
+        $pass = '123';
+        //idが一致するデータを更新する
+        $sql = "UPDATE posts SET name = :name, comment = :comment, update_datetime = :update_datetime
+         WHERE id = :id";
+        $stmt = $dbh -> prepare($sql);
+        $stmt -> bindParam(':id', $id);
+        $stmt -> bindParam(':name', $name);
+        $stmt -> bindParam(':comment', $comment);
+        $stmt -> bindParam(':update_datetime', $update_time);
 
-    //データの取得
+        $stmt -> execute();
+        
+
+    //データの全件取得
         $stmt = $dbh->query("SELECT * FROM posts");
         $results = $stmt->fetchall(PDO::FETCH_ASSOC);
         echo var_dump($results);
