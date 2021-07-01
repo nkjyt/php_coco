@@ -19,11 +19,11 @@
         ) engine=innodb default charset=utf8';
         //$create = $dbh->query($createsql);
 
-        //テーブル一覧
+/*         //テーブル一覧
             $stmt = $dbh -> query('SHOW TABLES');
             while($re = $stmt -> fetch(PDO::FETCH_ASSOC)){
                 var_dump($re);
-            }
+            } */
 
 /*     //データの挿入
         $name = 'p1';
