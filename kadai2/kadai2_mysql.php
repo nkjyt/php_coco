@@ -71,7 +71,7 @@
 
         $stmt -> execute(); */
     
-    //データの更新
+/*     //データの更新
         $id = 1;
         $name = 'p1_new';
         $comment = 'コメント編集';
@@ -87,7 +87,15 @@
         $stmt -> bindParam(':update_datetime', $update_time);
 
         $stmt -> execute();
-        
+         */
+
+    //データの削除
+        $id = 1;
+        $sql = "DELETE FROM posts WHERE id = :id";
+        $stmt = $dbh -> prepare($sql);
+        $stmt -> bindParam(':id', $id);
+
+        $stmt -> execute();
 
     //データの全件取得
         $stmt = $dbh->query("SELECT * FROM posts");
