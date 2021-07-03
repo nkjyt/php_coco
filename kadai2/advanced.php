@@ -15,9 +15,14 @@ if( !empty($_POST['btn_submit'])) {
             $error_message[] = 'コメントを入力してください';
         }
 
+        if (empty($_POST['password']) ){
+            $error_message[] = 'パスワードを入力してください';
+        }
+        
+
         if (empty($error_message)) {
             if($func == "投稿"){
-                writefile();
+                insert();
             }
             //編集モード
             if(!empty($_POST['editted'])){
@@ -264,14 +269,15 @@ if( !empty($_POST['btn_submit'])) {
         )";
 
         //実行準備
-        $stmt = $dbh -> prepare($sql);
+        $stmt = $db -> prepare($sql);
         //クエリのパラメータごとに値を組み込む
         $stmt -> bindValue(':name', $name);
         $stmt -> bindValue(':comment', $comment);
         $stmt -> bindValue(':update_datetime', $date);
         $stmt -> bindValue(':pass', $password);
         //組み込んだ後にSQL文を実行
-        $stmt -> execute();
+        $flag = $stmt -> execute();
+        echo $flag;
     }
 
     function update( $id ) {
