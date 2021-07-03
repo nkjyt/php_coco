@@ -26,7 +26,9 @@ if( !empty($_POST['btn_submit'])) {
             }
             //編集モード
             if(!empty($_POST['editted'])){
-                $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
+                $index = str_replace("/", "",$_POST['editted']);
+                update($index);
+                /* $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
                 $file = fopen('data.txt', 'w');
                 foreach($contents as $contents => $row) {
                     $index = str_replace("/", "",$_POST['editted']);
@@ -35,7 +37,7 @@ if( !empty($_POST['btn_submit'])) {
                          $row = $index."<>".$_POST['name']."<>".$_POST['comment']."<>".date("Y-m-d" ,time())."<>".$li[4];
                         }
                 fwrite($file, $row."\n");
-                }
+                } */
             }
         }
 }
@@ -50,7 +52,8 @@ if( !empty($_POST['btn_submit'])) {
 
         //編集の場合
         if( $_POST['function'] == "編集"){
-            $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
+            passCheck($number, $pw);
+            /* $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
             foreach ($contents as $contents => $row){
                 $li = explode('<>', $row);
                 //パスワード一致
@@ -59,19 +62,18 @@ if( !empty($_POST['btn_submit'])) {
                 } else {
                     $pw_error_message = "パスワードが違います";
                 }
-            }
+            } */
         } 
         //削除
         else {
-            $isDeleted = false;
-            $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
+            delete($number);
+            /* $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
                 $file = fopen('data.txt', 'w');
                 foreach ($contents as $contents => $row){
                     $li = explode('<>', $row);
                     if($number != $li[0]){
                         fwrite($file, $row."\n");
                     } elseif($number == $li[0] && $pw == $li[4]) {
-                        $isDeleted = !$isDeleted;
                         $pw_error_message =  "<p>".$number."番目の投稿を削除しました</p>";
                     } else {
                         fwrite($file, $row."\n");
@@ -80,7 +82,7 @@ if( !empty($_POST['btn_submit'])) {
                 }
                 if(empty($pw_error_message)){
                     $pw_error_message =  "<p>".$number."番目の投稿は存在しません</p>";
-                }
+                } */
         }
 
 } 
@@ -251,7 +253,7 @@ if( !empty($_POST['btn_submit'])) {
 
     function queryAll(){
         $db = connectDB();
-        $stmt = $db->query("SELECT id, name, comment, update_datetime FROM posts");
+        $stmt = $db->query("SELECT * FROM posts");
         $results = $stmt->fetchall(PDO::FETCH_ASSOC);
         return $results;
     }
@@ -276,22 +278,54 @@ if( !empty($_POST['btn_submit'])) {
         $stmt -> bindValue(':update_datetime', $date);
         $stmt -> bindValue(':pass', $password);
         //組み込んだ後にSQL文を実行
-        $flag = $stmt -> execute();
-        echo $flag;
+        $stmt -> execute(); 
     }
 
     function update( $id ) {
         $db = connectDB();
+        $date = date("Y-m-d" ,time());
+        $sql = "UPDATE posts SET name = :name, comment = :comment, update_datetime = :update_datetime
+            WHERE id = :id";
+        $stmt = $db -> prepare($sql);
+        $stmt -> execute(array(
+            ':id' => $id,
+            ':name' => $_POST['name'],
+            ':comment' => $_POST['comment'],
+            ':update_datetime' => $date
+        ));
+        $count = $stmt -> rowCount();
+        if($count == 0){
+            print("更新に失敗しました");
+        }
 
     }
 
     function delete($id) {
         $db = connectDB();
         $sql = "DELETE FROM posts WHERE id = :id";
-        $stmt = $dbh -> prepare($sql);
+        $stmt = $db -> prepare($sql);
         $stmt -> bindParam(':id', $id);
 
         $stmt -> execute();
+        $count = $stmt -> rowCount();
+
+        if ($count == 0){
+            print("データの削除に失敗しました");
+        }
+    }
+
+    function passCheck($id, $pw) {
+        $db = connectDB();
+        $stmt = $db -> prepare("SELECT pass FROM posts WHERE pass = :pass");
+        $stmt -> bindParam(':pass', $pw);
+        $stmt -> execute();
+        $count = $stmt -> rowCount();
+        if($count == 0){
+            print('dame');
+        } else {
+            print("aruyo");
+        }
+        
     }
 
 ?>
