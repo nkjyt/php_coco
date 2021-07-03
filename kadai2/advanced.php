@@ -166,7 +166,7 @@ if( !empty($_POST['btn_submit'])) {
 
         <h2>過去の投稿</h2>
             <?php 
-                $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
+                /* $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
                 foreach($contents as $contents => $content) {
                     $outputs = explode('<>', $content);
                     
@@ -177,9 +177,19 @@ if( !empty($_POST['btn_submit'])) {
                         $line = $line.", ".$output;
                     }
                     echo $line."<br/>";
+                } */
+                $data = queryAll();
+                foreach( $data as $key1 => $val1){
+                    $output = $val1['id'];
+                    foreach($val1 as $key2 => $val2) {
+                        if ($key2 == 'id'){
+                            continue;
+                        }
+                        $output = $output.", ".$val2;
+                    }
+                    echo $output."<br/>";
                 }
             ?>
-
     </body>
 </html>
 
@@ -232,6 +242,13 @@ if( !empty($_POST['btn_submit'])) {
         echo "接続失敗: " . $e->getMessage() ."\n";
         exit();
         }
+    }
+
+    function queryAll(){
+        $db = connectDB();
+        $stmt = $db->query("SELECT id, name, comment, update_datetime FROM posts");
+        $results = $stmt->fetchall(PDO::FETCH_ASSOC);
+        return $results;
     }
 
     function insert() {
