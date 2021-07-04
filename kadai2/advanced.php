@@ -15,32 +15,24 @@ if( !empty($_POST['btn_submit'])) {
             $error_message[] = 'コメントを入力してください';
         }
 
-        if (empty($_POST['password']) ){
-            $error_message[] = 'パスワードを入力してください';
+        //編集モード
+        if($func == "編集" && !empty($_POST['editted'])){
+            $index = str_replace("/", "",$_POST['editted']);
+            update($index);
         }
-        
-
-        if (empty($error_message)) {
-            if($func == "投稿"){
+        else {
+            if (empty($_POST['password']) ){
+                $error_message[] = 'パスワードを入力してください';
+            }
+    
+            if (empty($error_message) && $func == "投稿") {
                 insert();
             }
-            //編集モード
-            if(!empty($_POST['editted'])){
-                $index = str_replace("/", "",$_POST['editted']);
-                update($index);
-                /* $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
-                $file = fopen('data.txt', 'w');
-                foreach($contents as $contents => $row) {
-                    $index = str_replace("/", "",$_POST['editted']);
-                    $li = explode('<>', $row);
-                    if($index == $li[0]){
-                         $row = $index."<>".$_POST['name']."<>".$_POST['comment']."<>".date("Y-m-d" ,time())."<>".$li[4];
-                        }
-                fwrite($file, $row."\n");
-                } */
-            }
         }
+
 }
+
+
 
 ?>
 
@@ -55,17 +47,10 @@ if( !empty($_POST['btn_submit'])) {
             if (passCheck($number, $pw)){
                 $edit_data = queryPost($number);
                 print(var_dump($edit_data));
+            } else {
+                $pw_error_message = "パスワードが異なるか，投稿が存在しません";
             }
-            /* $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
-            foreach ($contents as $contents => $row){
-                $li = explode('<>', $row);
-                //パスワード一致
-                if($number == $li[0] && $pw == $li[4]){
-                    $edit_data = $li;
-                } else {
-                    $pw_error_message = "パスワードが違います";
-                }
-            } */
+
         } 
         //削除
         else {
@@ -124,9 +109,8 @@ if( !empty($_POST['btn_submit'])) {
                    <?php endforeach; ?>
                 </ul>
             <?php endif; ?>
-
             <input class="postButton" type = "submit" value = "<?php if(empty($_POST['pw_submit'])){echo "投稿";} else {echo "編集";} ?>" name ="btn_submit"/>
-            <input type="hidden" name="editted" value=<?php if(!empty($_POST['edit']) && !empty($edit_data)){ echo $edit_data['id']; } ?>/>
+            <input type="hidden" name="editted" value=<?php if(/* !empty($_POST['edit']) && */ !empty($edit_data)){ echo $edit_data['id']; }?>/>
         </form>
 
         
@@ -142,6 +126,7 @@ if( !empty($_POST['btn_submit'])) {
                     <form method ="POST" action="<?php print($_SERVER['PHP_SELF']) ?>"　onsubmit= "return confirm_form()" >
                     <h3>削除するためのパスワードを入力</h3>
                         <input type="text" name ="pw_submit"/><br/>
+ 
                         <input class="postButton" type = "submit" value = "確認"/>
                         <input type="hidden" name = "number" value="<?php echo $_POST['delete_number']?>">
                         <input type="hidden" name = "function" value ="<?php echo $_POST['delete']?>">
@@ -312,7 +297,7 @@ if( !empty($_POST['btn_submit'])) {
         ));
         $count = $stmt -> rowCount();
         if($count == 0){
-            print("更新に失敗しました");
+            print($id);
         }
 
     }
