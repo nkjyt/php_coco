@@ -52,7 +52,10 @@ if( !empty($_POST['btn_submit'])) {
 
         //編集の場合
         if( $_POST['function'] == "編集"){
-            passCheck($number, $pw);
+            if (passCheck($number, $pw)){
+                $edit_data = queryPost($number);
+                print(var_dump($edit_data));
+            }
             /* $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
             foreach ($contents as $contents => $row){
                 $li = explode('<>', $row);
@@ -107,10 +110,10 @@ if( !empty($_POST['btn_submit'])) {
 
         <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
         <h3>名前</h3>
-            <input type = "text" name = "name" value="<?php if(!empty($_POST['pw_submit']) && !empty($edit_data)){ echo $edit_data[1]; }?>"/><br/>
+            <input type = "text" name = "name" value="<?php if(!empty($_POST['pw_submit']) && !empty($edit_data)){ echo $edit_data['name']; }?>"/><br/>
         <h3>コメント</h3>
             <div>
-                <textarea class="commentbox" type = "text" name = "comment" ><?php if(!empty($_POST['pw_submit']) && !empty($edit_data)){ echo $edit_data[2];}?></textarea><br/>
+                <textarea class="commentbox" type = "text" name = "comment" ><?php if(!empty($_POST['pw_submit']) && !empty($edit_data)){ echo $edit_data['comment'];}?></textarea><br/>
             </div>
             <h3>パスワード</h3>
             <input class="passwordform" type="text" name="password" value="" /></br>
@@ -123,7 +126,7 @@ if( !empty($_POST['btn_submit'])) {
             <?php endif; ?>
 
             <input class="postButton" type = "submit" value = "<?php if(empty($_POST['pw_submit'])){echo "投稿";} else {echo "編集";} ?>" name ="btn_submit"/>
-            <input type="hidden" name="editted" value=<?php if(!empty($_POST['edit']) && !empty($edit_data)){ echo $edit_data[0]; } ?>/>
+            <input type="hidden" name="editted" value=<?php if(!empty($_POST['edit']) && !empty($edit_data)){ echo $edit_data['id']; } ?>/>
         </form>
 
         
@@ -251,6 +254,20 @@ if( !empty($_POST['btn_submit'])) {
         }
     }
 
+    function queryPost($id) {
+        $db = connectDB();
+        $stmt = $db -> prepare("SELECT * FROM posts WHERE id = :id");
+        $stmt -> execute(array(
+            ':id' => $id
+        ));
+        $results = $stmt -> fetchall(PDO::FETCH_ASSOC);
+        $count = $stmt -> rowCount();
+        if($count == 0){
+            print("something wrong");
+        }
+        return $results[0];
+    }
+
     function queryAll(){
         $db = connectDB();
         $stmt = $db->query("SELECT * FROM posts");
@@ -321,9 +338,9 @@ if( !empty($_POST['btn_submit'])) {
         $stmt -> execute();
         $count = $stmt -> rowCount();
         if($count == 0){
-            print('dame');
+            return False;
         } else {
-            print("aruyo");
+            return True;
         }
         
     }
