@@ -63,22 +63,6 @@ function confirm_form() {
         //削除
         else {
             delete($number);
-            /* $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
-                $file = fopen('data.txt', 'w');
-                foreach ($contents as $contents => $row){
-                    $li = explode('<>', $row);
-                    if($number != $li[0]){
-                        fwrite($file, $row."\n");
-                    } elseif($number == $li[0] && $pw == $li[4]) {
-                        $pw_error_message =  "<p>".$number."番目の投稿を削除しました</p>";
-                    } else {
-                        fwrite($file, $row."\n");
-                        $pw_error_message = "パスワードが違います";
-                    }
-                }
-                if(empty($pw_error_message)){
-                    $pw_error_message =  "<p>".$number."番目の投稿は存在しません</p>";
-                } */
         }
 
 }
@@ -120,7 +104,7 @@ function confirm_form() {
                 </ul>
             <?php endif; ?>
             <input class="postButton" type = "submit" value = "<?php if(empty($_POST['pw_submit'])){echo "投稿";} else {echo "編集";} ?>" name ="btn_submit"/>
-            <input type="hidden" name="editted" value=<?php if(/* !empty($_POST['edit']) && */ !empty($edit_data)){ echo $edit_data['id']; }?>/>
+            <input type="hidden" name="editted" value=<?php if(!empty($edit_data)){ echo $edit_data['id']; }?>/>
         </form>
 
         
@@ -171,18 +155,6 @@ function confirm_form() {
 
         <h2>過去の投稿</h2>
             <?php 
-                /* $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
-                foreach($contents as $contents => $content) {
-                    $outputs = explode('<>', $content);
-                    
-                    $line = $outputs[0];
-                    array_shift($outputs);
-
-                    foreach($outputs as $outputs => $output) {
-                        $line = $line.", ".$output;
-                    }
-                    echo $line."<br/>";
-                } */
                 $data = queryAll();
                 foreach( $data as $key1 => $val1){
                     $output = $val1['id'];
