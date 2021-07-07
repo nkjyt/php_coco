@@ -36,6 +36,14 @@ if( !empty($_POST['btn_submit'])) {
 
 ?>
 
+<script>
+//確認フォーム
+function confirm_form() {
+    var select = confirm("本当に削除しますか？");
+    return select;
+}
+</script>
+
 <?php
     //パスワード関連
     if(!empty($_POST['pw_submit'])){
@@ -73,7 +81,9 @@ if( !empty($_POST['btn_submit'])) {
                 } */
         }
 
-} 
+}
+
+
 ?>
 
 <!DOCTYPE html>
@@ -123,11 +133,11 @@ if( !empty($_POST['btn_submit'])) {
             <input class="postButton" type = "submit" value = "削除" name ="delete" />
         
             <?php if(!empty($_POST['delete'])):?>
-                    <form method ="POST" action="<?php print($_SERVER['PHP_SELF']) ?>"　onsubmit= "return confirm_form()" >
+                    <form method ="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
                     <h3>削除するためのパスワードを入力</h3>
                         <input type="text" name ="pw_submit"/><br/>
  
-                        <input class="postButton" type = "submit" value = "確認"/>
+                        <input class="postButton" type = "submit" value = "確認"  onclick="return confirm_form()"/>
                         <input type="hidden" name = "number" value="<?php echo $_POST['delete_number']?>">
                         <input type="hidden" name = "function" value ="<?php echo $_POST['delete']?>">
                     </form>
@@ -190,13 +200,7 @@ if( !empty($_POST['btn_submit'])) {
 
 
 
-<script>
-    //確認フォーム
-    function confirm_form() {
-        var select = confirm("本当に削除しますか？");
-        return select;
-    }
-</script>
+
 
 <?php 
 
