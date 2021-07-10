@@ -3,21 +3,26 @@ $error_message = null;
 
     //clearTable("users");
 
-    if(!empty($_POST['register'])){
-        $name = $_POST['name'];
+    if(!empty($_POST['login'])){
+        $uid = $_POST['id'];
         $pass = $_POST['password'];
 
-        if(empty($_POST['name'])){
+        if(empty($_POST['id'])){
+            $error_message = "ユーザー名が入力されていません";
+        }
+        if(empty($_POST['password'])){
             $error_message = "ユーザー名が入力されていません";
         }
 
-        if($_POST['password'] == $_POST['confirm']){
-            //ID生成、登録処理
-            $uid = uniqid();
-            insert($uid);
-            $message = "登録完了<br /> ID：".$uid."<br />パスワード：".$pass;
-        } else {
-            $error_message = "確認用パスワードが異なります";
+        if(empty($error_message)){
+            $result = queryUser($uid);
+            if(empty($result)){
+                print("hoge");
+            }
+            else {
+                print(var_dump($result));
+            }
+
         }
     }
 ?>
@@ -33,7 +38,7 @@ $error_message = null;
 </head>
 
 <body>
-    <h1 class="title">登録フォーム</h1>
+    <h1 class="title">ログインフォーム</h1>
 
     <?php if(!empty($error_message)): ?>
         <ul class="error_message">
@@ -48,23 +53,20 @@ $error_message = null;
 
     <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
     <div class="user_form">
-        <h3>ユーザー名</h3>
-            <input type = "text" name = "name" /><br/>
+        <h3>ID</h3>
+            <input type = "text" name = "id" /><br/>
     </div>
-        
     <h3>パスワード</h3>
         <input type="text" name = "password" /><br />
-    <h3>確認用パスワード</h3>
-        <input type="text" name = "confirm" /><br/>
     
-    <input class="register_button" type="submit" name = "register" value="登録">
+    <input class="login_button" type="submit" name = "login" value="ログイン">
     </form>
 
     <h2>ユーザ一覧</h2>
             <?php 
                 $data = queryAll("users");
                 if (empty($data)){
-                    print("現在投稿はありません");
+                    print("Not existing user");
                 }
                 foreach( $data as $key1 => $val1){
                     $output = $val1['id'];
@@ -103,6 +105,15 @@ $error_message = null;
         return $results;
     }
 
+    function queryUser($uid) {
+        $db = connectDB();
+        $stmt = $db -> prepare("SELECT * FROM users WHERE uid = :uid");
+        $stmt -> bindParam(':uid', $uid);
+        $stmt -> execute();
+        $result = $stmt -> fetchall(PDO::FETCH_ASSOC);
+        return $result;
+    }
+
     function insert($uid) {
         $db = connectDB();
         $name = $_POST['name'];
@@ -139,16 +150,13 @@ $error_message = null;
     .message {
         font-size:30;
     }
-    .user_form {
-        margin-bottom: 40px
-    }
     ul.error_message {
         color : red;
         margin : 20px;
     }
-input.register_button {
-    width: 50px;
-    height: 30px;
+input.login_button {
+    width: 80px;
+    height: 40px;
     margin-top: 30px;
 }
 </style>
