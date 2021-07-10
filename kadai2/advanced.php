@@ -62,7 +62,12 @@ function confirm_form() {
         } 
         //削除
         else {
-            delete($number);
+            if (passCheck($number, $pw)){
+                delete($number);
+            } else {
+                $pw_error_message = "パスワードが異なるか，投稿が存在しません";
+            }
+            
         }
 
 }
@@ -156,6 +161,9 @@ function confirm_form() {
         <h2>過去の投稿</h2>
             <?php 
                 $data = queryAll();
+                if (empty($data)){
+                    print("現在投稿はありません");
+                }
                 foreach( $data as $key1 => $val1){
                     $output = $val1['id'];
                     foreach($val1 as $key2 => $val2) {
@@ -185,7 +193,7 @@ function confirm_form() {
         $id = count($contents) + 1;
         $name = $_POST['name'];
         $comment = $_POST['comment'];
-        $date = date("Y-m-d" ,time());
+        $date = date("Y-m-d H:i:s");
         $password = $_POST['password'];
 
         $row = $id."<>".$name."<>".$comment."<>".$date."<>".$password;
@@ -240,7 +248,7 @@ function confirm_form() {
         $db = connectDB();
         $name = $_POST['name'];
         $comment = $_POST['comment'];
-        $date = date("Y-m-d" ,time());
+        $date = date("Y-m-d H:i:s");
         $password = $_POST['password'];
         $sql = "INSERT INTO posts (
             name, comment, update_datetime , pass
@@ -261,7 +269,7 @@ function confirm_form() {
 
     function update( $id ) {
         $db = connectDB();
-        $date = date("Y-m-d" ,time());
+        $date = date("Y-m-d H:i:s");
         $sql = "UPDATE posts SET name = :name, comment = :comment, update_datetime = :update_datetime
             WHERE id = :id";
         $stmt = $db -> prepare($sql);

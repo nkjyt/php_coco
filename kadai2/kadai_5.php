@@ -17,7 +17,7 @@ if( !empty($_POST['btn_submit'])) {
 
         if (empty($error_message)) {
             //編集モード
-            if(!empty($_POST['editted'])){;
+            if($_POST['func'] == "編集"){
                 $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
                 $file = fopen('data.txt', 'w');
                 foreach($contents as $contents => $row) {
@@ -25,10 +25,10 @@ if( !empty($_POST['btn_submit'])) {
                     print($index);
                     $li = explode('<>', $row);
                     if($index == $li[0]){
-                         $row = $index."<>".$_POST['name']."<>".$_POST['comment']."<>".date("Y-m-d" ,time());
+                         $row = $index."<>".$_POST['name']."<>".$_POST['comment']."<>".date("Y-m-d H:i:s");
                         }
                 fwrite($file, $row."\n");
-        }
+                }
             } else {
                 writefile();
             }
@@ -82,6 +82,7 @@ if (!empty($_POST['edit']) ){
                 </ul>
             <?php endif; ?>
             <input class="postButton" type = "submit" value = "<?php if(empty($_POST['edit'])){echo "投稿";} else {echo "編集";} ?>" name ="btn_submit"/>
+            <input type="hidden" name = "func" value = "<?php if(empty($_POST['edit'])){echo "投稿";} else {echo "編集";} ?>" />
             <input type="hidden" name="editted" value=<?php if(!empty($_POST['edit'])){ echo $edit_data[0]; } ?>/>
         </form>
 
@@ -171,7 +172,7 @@ if (!empty($_POST['edit']) ){
         $id = count($contents) + 1;
         $name = $_POST['name'];
         $comment = $_POST['comment'];
-        $date = date("Y-m-d" ,time());
+        $date = date("Y-m-d　H:i:s");
 
         $row = $id."<>".$name."<>".$comment."<>".$date;
 

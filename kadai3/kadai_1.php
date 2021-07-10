@@ -1,12 +1,17 @@
 <?php
 $error_message = null;
     if(!empty($_POST['register'])){
+        $name = $_POST['name'];
+        $pass = $_POST['password'];
+
         if(empty($_POST['name'])){
             $error_message = "ユーザー名が入力されていません";
         }
 
         if($_POST['password'] == $_POST['confirm']){
             //ID生成、登録処理
+            $uid = uniqid();
+            echo $uid;
         } else {
             $error_message = "確認用パスワードが異なります";
         }
@@ -22,7 +27,7 @@ $error_message = null;
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>掲示板</title>
 </head>
 
 <body>
@@ -33,8 +38,11 @@ $error_message = null;
         </ul>
     <?php endif; ?>
     <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
-    <h3>ユーザー名</h3>
-        <input type = "text" name = "name" /><br/>
+    <div class="user_form">
+        <h3>ユーザー名</h3>
+            <input type = "text" name = "name" /><br/>
+    </div>
+        
     <h3>パスワード</h3>
         <input type="text" name = "password" /><br />
     <h3>確認用パスワード</h3>
@@ -47,6 +55,9 @@ $error_message = null;
 </html>
 
 <style>
+    .user_form {
+        margin-bottom: 40px
+    }
     ul.error_message {
         color : red;
         margin : 20px;
@@ -54,6 +65,6 @@ $error_message = null;
 input.register_button {
     width: 50px;
     height: 30px;
-    margin-top: 20px;
+    margin-top: 30px;
 }
 </style>

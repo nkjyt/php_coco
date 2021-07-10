@@ -20,14 +20,14 @@ if( !empty($_POST['btn_submit'])) {
                 writefile();
             }
             //編集モード
-            if(!empty($_POST['editted'])){
+            else{
                 $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
                 $file = fopen('data.txt', 'w');
                 foreach($contents as $contents => $row) {
                     $index = str_replace("/", "",$_POST['editted']);
                     $li = explode('<>', $row);
                     if($index == $li[0]){
-                         $row = $index."<>".$_POST['name']."<>".$_POST['comment']."<>".date("Y-m-d" ,time())."<>".$li[4];
+                         $row = $index."<>".$_POST['name']."<>".$_POST['comment']."<>".date("Y-m-d　H:i:s")."<>".$li[4];
                         }
                 fwrite($file, $row."\n");
                 }
@@ -51,7 +51,8 @@ if( !empty($_POST['btn_submit'])) {
                 //パスワード一致
                 if($number == $li[0] && $pw == $li[4]){
                     $edit_data = $li;
-                } else {
+                }
+                if($number == $li[0] && $pw != $li[4]){
                     $pw_error_message = "パスワードが違います";
                 }
             }
@@ -116,7 +117,7 @@ if( !empty($_POST['btn_submit'])) {
             <?php endif; ?>
 
             <input class="postButton" type = "submit" value = "<?php if(empty($_POST['pw_submit'])){echo "投稿";} else {echo "編集";} ?>" name ="btn_submit"/>
-            <input type="hidden" name="editted" value=<?php if(!empty($_POST['edit']) && !empty($edit_data)){ echo $edit_data[0]; } ?>/>
+            <input type="hidden" name="editted" value=<?php if(!empty($edit_data)){ echo $edit_data[0]; } ?>/>
         </form>
 
         
@@ -204,7 +205,7 @@ if( !empty($_POST['btn_submit'])) {
         $id = count($contents) + 1;
         $name = $_POST['name'];
         $comment = $_POST['comment'];
-        $date = date("Y-m-d" ,time());
+        $date = date("Y-m-d　H:i:s");
         $password = $_POST['password'];
 
         $row = $id."<>".$name."<>".$comment."<>".$date."<>".$password;
