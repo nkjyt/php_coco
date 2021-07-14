@@ -1,25 +1,21 @@
 <?php 
-    /*--------------------------------------------------
-    オートログイン処理
-    --------------------------------------------------*/
-    if ( ! empty( $_COOKIE['auto_login'] )) {
-        $auto_login_key = $_COOKIE['auto_login'];
-        $author_repository = $this->db_manager->get('Author');
-        
-        /*
-        $sql = "SELECT * FROM auto_login WHERE auto_login_key = :auto_login_key";
-        */
-        $is_auto_login = $author_repository->autoLoginFetch( $auto_login_key );
-        
-        if ( $is_auto_login !== false ) {
-            if ( ! empty( $auto_login_key )) {
-                $this->delete_auto_login( $auto_login_key );
-            }
-            $this->setup_auto_login( $is_auto_login['user_name'] );
-            
-            $author = $this->db_manager->get('Author')->fetchByUserName( $is_auto_login['user_name'] );
-            $this->session->setAuthenticated( true );
-            $this->session->set( 'author' , $author );
+    if(isset($_COOKIE["auto_login"])){
+        $db = connectDB();
+        $auto_login = $db->prepare(("SELECT * FROM auto_login WHERE auto_login_key=?"));
+        $auto_login->execute(array(htmlspecialchars($_COOKIE["auto_login"])));
+        $auto_login_info = $auto_login->fetch();
+
+        //自動ログイントークンが一致したとき
+        if($auto_login_info){
+            session_regenerate_id(true);
+            $_SESSION["uid"] = $auto_login_info["uid"];
+            header("Location: http://co-19-356.99sv-coco.com/kadai3/kadai_2_posts.php");
+            exit();
+        } else {
+             //クッキーとデータベースで、自動ログイントークンが一致しない場合は、クッキーからトークンを消去
+            setcookie("auto_login",$auto_login_info["auto_login_key"],time()-60*60*24*7);
+            header("Location: http://co-19-356.99sv-coco.com/kadai3/kadai_2_posts.php");
+            exit();
         }
     }
 ?>
@@ -41,65 +37,46 @@ $error_message = null;
         }
 
         if(empty($error_message)){
-            $result = queryUser($uid);
-            if(empty($result)){
+            $user = queryUser($uid);
+            if(empty($user)){
                 $error_message = "IDまたはパスワードが一致しません";
             }
+            //一致するユーザデータがあった場合
             else {
-                /*---------------
-                手動ログイン
-                ----------------*/
-                // 一旦auto_loginを削除
-                if ( ! empty( $_COOKIE['auto_login'] )) {
-                    $this->delete_auto_login( $_COOKIE['auto_login'] );
-                }
-                // 新たにauto_loginをセット
-                if( ! empty( $auto_login )) {
-                    $this->setup_auto_login( $user_name );
+                if(!empty($_POST['rb'])){
+                    //オートログインにチェックあり
+                    $auto_login_token = bin2hex(random_bytes(32));
+                    //自動ログイントークンをクッキーに保存
+                    setcookie("auto_login", $auto_login_token, time()+60*60*24*7);
+                    
+                    //ログインユーザの自動ログイントークンがDBにないか確認
+                    $db = connectDB();
+                    $exist = $db -> prepare("SELECT * FROM auto_login WHERE uid=?");
+                    $exist -> execute(array($user["uid"]));
+
+                    //すでにトークンが存在する場合は、DBのトークンを更新
+                    if($exist->fetch()){
+                        $update_key = $db->prepare("UPDATE auto_login SET auto_login_key =? WHERE uid=?");
+                        $update_key->execute(array(
+                            $auto_login_token,
+                            $user['uid']
+                        ));
+                    }
+                    //自動ログイントークンがない場合は、新規でレコードを追加
+                    else {
+                        $state=$db->prepare("INSERT INTO auto_login VALUES(?,?)");
+                        $state->execute(array(
+                            $user["uid"],
+                            $auto_login_token
+                        ));
+                    }
+                } else {
+                    //手動ログイン
                 }
             }
         }
     }
-        /*--------------------------------------------------
-    オートログイン　セットアップ
-    --------------------------------------------------*/
-    public function setup_auto_login( $user_name )
-    {
-        $cookieName = 'auto_login';
-        $auto_login_key = sha1( uniqid() . mt_rand( 1,999999999 ) . '_auto_login' );
-        $cookieExpire = time() + 3600 * 24 * 7; // 7日間
-        $cookiePath = '/';
-        $cookieDomain = $_SERVER['SERVER_NAME'];
-        
-        /*
-        $sql = "
-        INSERT INTO auto_login ( user_name , auto_login_key )
-        VALUES ( :user_name , :auto_login_key )";
-        */
-        $this->db_manager->get('Author')->autoLoginSet( $user_name , $auto_login_key );
-        
-        setcookie( $cookieName, $auto_login_key, $cookieExpire, $cookiePath, $cookieDomain );
-    }
 
-    /*--------------------------------------------------
-    オートログイン　デリート
-    --------------------------------------------------*/
-    public function delete_auto_login( $auto_login_key = '' )
-    {
-        $author = $this->session->get('author');
-        
-        /*
-        $sql = "DELETE FROM auto_login WHERE user_name=:user_name";
-        */
-        $this->db_manager->get('Author')->autoLoginDeleteByName( $author['user_name'] );
-        
-        $cookieName = 'auto_login';
-        $cookieExpire = time() - 1800;
-        $cookiePath = '/';
-        $cookieDomain = $_SERVER['SERVER_NAME'];
-        
-        setcookie( $cookieName, $auto_login_key, $cookieExpire, $cookiePath, $cookieDomain );
-    }
 ?>
 
 <?php 
@@ -142,7 +119,10 @@ $error_message = null;
     <h3>パスワード</h3>
         <input type="text" name = "password" /><br />
     
+    <label class="auto_login_radio"><input class="auto_login" type="radio" name = "rb" value = "auto">自動でログインする</label></br>
     <input class="login_button" type="submit" name = "login" value="ログイン">
+
+    
     </form>
 
     <h2>ユーザ一覧</h2>
@@ -194,7 +174,7 @@ $error_message = null;
         $stmt -> bindParam(':uid', $uid);
         $stmt -> execute();
         $result = $stmt -> fetchall(PDO::FETCH_ASSOC);
-        return $result;
+        return $result[0];
     }
 
     function insert($uid) {
@@ -230,6 +210,9 @@ $error_message = null;
 
 
 <style>
+    input{
+        margin-bottom: 20px;
+    }
     .message {
         font-size:30;
     }
