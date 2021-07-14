@@ -1,4 +1,20 @@
 <?php 
+    session_start();
+    if(isset($_COOKIE["auto_login"])){
+        print($_SESSION["uid"]);
+        $db = connectDB();
+        $auto_login = $db->prepare(("SELECT * FROM auto_login WHERE auto_login_key=?"));
+        $auto_login->execute(array(htmlspecialchars($_COOKIE["auto_login"])));
+        $auto_login_info = $auto_login->fetch();
+        print($auto_login_info["uid"]);
+        $user = queryUser($auto_login_info["uid"]);
+        print(var_dump($user));
+    }
+    $user = queryUser($_SESSION["uid"]);
+    
+?>
+
+<?php 
 
 $error_message = array();
 $error_message_edit = null;
@@ -94,7 +110,7 @@ function confirm_form() {
 
         <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
         <h3>名前</h3>
-            <input type = "text" name = "name" value="<?php if(!empty($_POST['pw_submit']) && !empty($edit_data)){ echo $edit_data['name']; }?>"/><br/>
+            <input type = "text" name = "name" value="<?php echo $user['name']; ?>"/><br/>
         <h3>コメント</h3>
             <div>
                 <textarea class="commentbox" type = "text" name = "comment" ><?php if(!empty($_POST['pw_submit']) && !empty($edit_data)){ echo $edit_data['comment'];}?></textarea><br/>
@@ -239,6 +255,16 @@ function confirm_form() {
         $results = $stmt->fetchall(PDO::FETCH_ASSOC);
         return $results;
     }
+
+    function queryUser($uid) {
+        $db = connectDB();
+        $stmt = $db -> prepare("SELECT * FROM users WHERE uid = :uid");
+        $stmt -> bindParam(':uid', $uid);
+        $stmt -> execute();
+        $result = $stmt -> fetchall(PDO::FETCH_ASSOC);
+        return $result[0];
+    }
+
     
     function insert() {
         $db = connectDB();

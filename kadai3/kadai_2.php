@@ -1,4 +1,5 @@
 <?php 
+    session_start();
     if(isset($_COOKIE["auto_login"])){
         $db = connectDB();
         $auto_login = $db->prepare(("SELECT * FROM auto_login WHERE auto_login_key=?"));
@@ -9,11 +10,13 @@
         if($auto_login_info){
             session_regenerate_id(true);
             $_SESSION["uid"] = $auto_login_info["uid"];
+            $input = queryUser($_SESSION["uid"]);
             header("Location: http://co-19-356.99sv-coco.com/kadai3/kadai_2_posts.php");
             exit();
         } else {
              //クッキーとデータベースで、自動ログイントークンが一致しない場合は、クッキーからトークンを消去
             setcookie("auto_login",$auto_login_info["auto_login_key"],time()-60*60*24*7);
+            $input = queryUser($_SESSION["uid"]);
             header("Location: http://co-19-356.99sv-coco.com/kadai3/kadai_2_posts.php");
             exit();
         }
@@ -71,9 +74,10 @@ $error_message = null;
                         ));
                     }
                 }
+                session_start();
                 //ログインする際にはセッションidを更新する（セッションハイジャック対策）
                 session_regenerate_id(true);
-                $_SESSION["user_id"]=$user["id"];
+                $_SESSION["uid"]=$user["uid"];
                 header("Location: http://co-19-356.99sv-coco.com/kadai3/kadai_2_posts.php");
                 exit();
             }
@@ -117,10 +121,10 @@ $error_message = null;
     <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
     <div class="user_form">
         <h3>ID</h3>
-            <input type = "text" name = "id" /><br/>
+            <input type = "text" name = "id" value="<?php if(!empty($input)){ echo $input['uid'];} ?>"  /><br/>
     </div>
     <h3>パスワード</h3>
-        <input type="text" name = "password" /><br />
+        <input type="text" name = "password" value="<?php if(!empty($input)){ echo $input['password'];} ?>" /><br />
     
     <label class="auto_login_radio"><input class="auto_login" type="radio" name = "rb" value = "auto">自動でログインする</label></br>
     <input class="login_button" type="submit" name = "login" value="ログイン">
