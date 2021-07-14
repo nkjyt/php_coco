@@ -1,3 +1,29 @@
+<?php 
+    /*--------------------------------------------------
+    オートログイン処理
+    --------------------------------------------------*/
+    if ( ! empty( $_COOKIE['auto_login'] )) {
+        $auto_login_key = $_COOKIE['auto_login'];
+        $author_repository = $this->db_manager->get('Author');
+        
+        /*
+        $sql = "SELECT * FROM auto_login WHERE auto_login_key = :auto_login_key";
+        */
+        $is_auto_login = $author_repository->autoLoginFetch( $auto_login_key );
+        
+        if ( $is_auto_login !== false ) {
+            if ( ! empty( $auto_login_key )) {
+                $this->delete_auto_login( $auto_login_key );
+            }
+            $this->setup_auto_login( $is_auto_login['user_name'] );
+            
+            $author = $this->db_manager->get('Author')->fetchByUserName( $is_auto_login['user_name'] );
+            $this->session->setAuthenticated( true );
+            $this->session->set( 'author' , $author );
+        }
+    }
+?>
+
 <?php
 $error_message = null;
 
@@ -17,28 +43,71 @@ $error_message = null;
         if(empty($error_message)){
             $result = queryUser($uid);
             if(empty($result)){
-                print("hoge");
+                $error_message = "IDまたはパスワードが一致しません";
             }
             else {
-                print(var_dump($result));
-                session_start();
-                print('セッションIDは '.$_COOKIE['PHPSESSID'].' です。');
-                $_SESSION['name'] = $result[0]['name'];
-                echo 'ユーザー名は '. $_SESSION['name'].' 。';
-
-                unset($_SESSION['name']);
-
-                if (!isset($_SESSION['name'])){
-                    echo 'ユーザー名は削除されました。';
-                }else{
-                    echo 'ユーザー名は '. $_SESSION['name'].' 。';
+                /*---------------
+                手動ログイン
+                ----------------*/
+                // 一旦auto_loginを削除
+                if ( ! empty( $_COOKIE['auto_login'] )) {
+                    $this->delete_auto_login( $_COOKIE['auto_login'] );
+                }
+                // 新たにauto_loginをセット
+                if( ! empty( $auto_login )) {
+                    $this->setup_auto_login( $user_name );
                 }
             }
-
         }
+    }
+        /*--------------------------------------------------
+    オートログイン　セットアップ
+    --------------------------------------------------*/
+    public function setup_auto_login( $user_name )
+    {
+        $cookieName = 'auto_login';
+        $auto_login_key = sha1( uniqid() . mt_rand( 1,999999999 ) . '_auto_login' );
+        $cookieExpire = time() + 3600 * 24 * 7; // 7日間
+        $cookiePath = '/';
+        $cookieDomain = $_SERVER['SERVER_NAME'];
+        
+        /*
+        $sql = "
+        INSERT INTO auto_login ( user_name , auto_login_key )
+        VALUES ( :user_name , :auto_login_key )";
+        */
+        $this->db_manager->get('Author')->autoLoginSet( $user_name , $auto_login_key );
+        
+        setcookie( $cookieName, $auto_login_key, $cookieExpire, $cookiePath, $cookieDomain );
+    }
+
+    /*--------------------------------------------------
+    オートログイン　デリート
+    --------------------------------------------------*/
+    public function delete_auto_login( $auto_login_key = '' )
+    {
+        $author = $this->session->get('author');
+        
+        /*
+        $sql = "DELETE FROM auto_login WHERE user_name=:user_name";
+        */
+        $this->db_manager->get('Author')->autoLoginDeleteByName( $author['user_name'] );
+        
+        $cookieName = 'auto_login';
+        $cookieExpire = time() - 1800;
+        $cookiePath = '/';
+        $cookieDomain = $_SERVER['SERVER_NAME'];
+        
+        setcookie( $cookieName, $auto_login_key, $cookieExpire, $cookiePath, $cookieDomain );
     }
 ?>
 
+<?php 
+?>
+
+<?php 
+
+?>
 
 
 
