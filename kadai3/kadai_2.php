@@ -21,11 +21,25 @@ $error_message = null;
             }
             else {
                 print(var_dump($result));
+                session_start();
+                print('セッションIDは '.$_COOKIE['PHPSESSID'].' です。');
+                $_SESSION['name'] = $result[0]['name'];
+                echo 'ユーザー名は '. $_SESSION['name'].' 。';
+
+                unset($_SESSION['name']);
+
+                if (!isset($_SESSION['name'])){
+                    echo 'ユーザー名は削除されました。';
+                }else{
+                    echo 'ユーザー名は '. $_SESSION['name'].' 。';
+                }
             }
 
         }
     }
 ?>
+
+
 
 
 <!DOCTYPE html>
