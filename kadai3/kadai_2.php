@@ -70,9 +70,12 @@ $error_message = null;
                             $auto_login_token
                         ));
                     }
-                } else {
-                    //手動ログイン
                 }
+                //ログインする際にはセッションidを更新する（セッションハイジャック対策）
+                session_regenerate_id(true);
+                $_SESSION["user_id"]=$user["id"];
+                header("Location: http://co-19-356.99sv-coco.com/kadai3/kadai_2_posts.php");
+                exit();
             }
         }
     }
