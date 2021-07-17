@@ -42,6 +42,7 @@
         $stmt -> execute(); */
 
         $sql = "SET GLOBAL max_allowed_packet=16777216";
+        $sql = "SHOW VARIABLES LIKE 'max_allowed_packet'";
         $stmt = $dbh -> prepare($sql);
         $stmt -> execute();
 
