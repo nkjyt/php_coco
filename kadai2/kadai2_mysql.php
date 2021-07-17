@@ -102,6 +102,9 @@
 
         $stmt -> execute();
  */
+        $sql = "TRUNCATE table posts";
+        $stmt = $dbh -> prepare($sql);
+        $stmt -> execute();
 
     //データの全件取得
         $stmt = $dbh->query("SELECT * FROM posts");
