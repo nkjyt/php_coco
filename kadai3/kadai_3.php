@@ -1,184 +1,142 @@
 <?php 
     session_start();
     if(isset($_COOKIE["auto_login"])){
-        print($_SESSION["uid"]);
         $db = connectDB();
         $auto_login = $db->prepare(("SELECT * FROM auto_login WHERE auto_login_key=?"));
         $auto_login->execute(array(htmlspecialchars($_COOKIE["auto_login"])));
         $auto_login_info = $auto_login->fetch();
-        print($auto_login_info["uid"]);
-        $user = queryUser($auto_login_info["uid"]);
-        print(var_dump($user));
+
+        //自動ログイントークンが一致したとき
+        if($auto_login_info){
+            session_regenerate_id(true);
+            $_SESSION["uid"] = $auto_login_info["uid"];
+            $input = queryUser($_SESSION["uid"]);
+            header("Location: http://co-19-356.99sv-coco.com/kadai3/kadai_3_posts.php");
+            exit();
+        } else {
+             //クッキーとデータベースで、自動ログイントークンが一致しない場合は、クッキーからトークンを消去
+            setcookie("auto_login",$auto_login_info["auto_login_key"],time()-60*60*24*7);
+            $input = queryUser($_SESSION["uid"]);
+            header("Location: http://co-19-356.99sv-coco.com/kadai3/kadai_3_posts.php");
+            exit();
+        }
     }
-    $user = queryUser($_SESSION["uid"]);
-    
+?>
+
+<?php
+$error_message = null;
+
+    //clearTable("users");
+
+    if(!empty($_POST['login'])){
+        $uid = $_POST['id'];
+        $pass = $_POST['password'];
+
+        if(empty($_POST['id'])){
+            $error_message = "ユーザー名が入力されていません";
+        }
+        if(empty($_POST['password'])){
+            $error_message = "ユーザー名が入力されていません";
+        }
+
+        if(empty($error_message)){
+            $user = queryUser($uid);
+            if(empty($user)){
+                $error_message = "IDまたはパスワードが一致しません";
+            }
+            //一致するユーザデータがあった場合
+            else {
+                if(!empty($_POST['rb'])){
+                    //オートログインにチェックあり
+                    $auto_login_token = bin2hex(random_bytes(32));
+                    //自動ログイントークンをクッキーに保存
+                    setcookie("auto_login", $auto_login_token, time()+60*60*24*7);
+                    
+                    //ログインユーザの自動ログイントークンがDBにないか確認
+                    $db = connectDB();
+                    $exist = $db -> prepare("SELECT * FROM auto_login WHERE uid=?");
+                    $exist -> execute(array($user["uid"]));
+
+                    //すでにトークンが存在する場合は、DBのトークンを更新
+                    if($exist->fetch()){
+                        $update_key = $db->prepare("UPDATE auto_login SET auto_login_key =? WHERE uid=?");
+                        $update_key->execute(array(
+                            $auto_login_token,
+                            $user['uid']
+                        ));
+                    }
+                    //自動ログイントークンがない場合は、新規でレコードを追加
+                    else {
+                        $state=$db->prepare("INSERT INTO auto_login VALUES(?,?)");
+                        $state->execute(array(
+                            $user["uid"],
+                            $auto_login_token
+                        ));
+                    }
+                }
+                session_start();
+                //ログインする際にはセッションidを更新する（セッションハイジャック対策）
+                session_regenerate_id(true);
+                $_SESSION["uid"]=$user["uid"];
+                header("Location: http://co-19-356.99sv-coco.com/kadai3/kadai_3_posts.php");
+                exit();
+            }
+        }
+    }
+
+?>
+
+<?php 
 ?>
 
 <?php 
 
-$error_message = array();
-$error_message_edit = null;
-
-
-if( !empty($_POST['btn_submit'])) {
-    $func = str_replace("/", "",$_POST['btn_submit']);
-
-        if (empty($_POST['name']) ){
-            $error_message[] = '名前を入力してください';
-        }
-
-        if (empty($_POST['comment']) ){
-            $error_message[] = 'コメントを入力してください';
-        }
-
-        //編集モード
-        if($func == "編集" && !empty($_POST['editted'])){
-            $index = str_replace("/", "",$_POST['editted']);
-            update($index);
-        }
-        else {
-            if (empty($_POST['password']) ){
-                $error_message[] = 'パスワードを入力してください';
-            }
-    
-            if (empty($error_message) && $func == "投稿") {
-                insert();
-            }
-        }
-
-}
-
-
-
 ?>
 
-<script>
-//確認フォーム
-function confirm_form() {
-    var select = confirm("本当に削除しますか？");
-    return select;
-}
-</script>
 
-<?php
-    //パスワード関連
-    if(!empty($_POST['pw_submit'])){
-        $pw = $_POST['pw_submit'];
-        $number = $_POST['number'];
-
-        //編集の場合
-        if( $_POST['function'] == "編集"){
-            if (passCheck($number, $pw)){
-                $edit_data = queryPost($number);
-                print(var_dump($edit_data));
-            } else {
-                $pw_error_message = "パスワードが異なるか，投稿が存在しません";
-            }
-
-        } 
-        //削除
-        else {
-            if (passCheck($number, $pw)){
-                delete($number);
-            } else {
-                $pw_error_message = "パスワードが異なるか，投稿が存在しません";
-            }
-            
-        }
-
-}
-
-
-?>
 
 <!DOCTYPE html>
 <html lang="ja">
-    <head>
-        <meta charset="UTF-8">
-        <title>簡易掲示板</title>
-        <link rel="stylesheet" href="style.css">
-    </head>
-    <body>
-    <link rel="stylesheet" href="style.css">
-        <h1 class="title">簡易掲示板</h1>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>掲示板</title>
+</head>
 
-        <?php if(!empty($pw_error_message)): ?>
-                <ul class="error_message">
-                     <li class="error"><?php echo $pw_error_message; ?> </li>
-                </ul>
-        <?php endif; ?>
+<body>
+    <h1 class="title">ログインフォーム</h1>
 
-        <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
-        <h3>名前</h3>
-            <input type = "text" name = "name" value="<?php echo $user['name']; ?>"/><br/>
-        <h3>コメント</h3>
-            <div>
-                <textarea class="commentbox" type = "text" name = "comment" ><?php if(!empty($_POST['pw_submit']) && !empty($edit_data)){ echo $edit_data['comment'];}?></textarea><br/>
-            </div>
-            <h3>パスワード</h3>
-            <input class="passwordform" type="text" name="password" value="" /></br>
-            <?php if(!empty($error_message)): ?>
-                <ul class="error_message">
-                    <?php foreach($error_message as $value): ?>
-                     <li class="error"><?php echo $value; ?> </li>
-                   <?php endforeach; ?>
-                </ul>
-            <?php endif; ?>
-            <input class="postButton" type = "submit" value = "<?php if(empty($_POST['pw_submit'])){echo "投稿";} else {echo "編集";} ?>" name ="btn_submit"/>
-            <input type="hidden" name="editted" value=<?php if(!empty($edit_data)){ echo $edit_data['id']; }?>/>
-        </form>
+    <?php if(!empty($error_message)): ?>
+        <ul class="error_message">
+                <li class="error"><?php echo $error_message; ?> </li>
+        </ul>
+    <?php endif; ?>
 
-        
-        
-        
-
-        <h3>削除対象番号</h3>
-        <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
-            <input type="text" name ="delete_number"/><br/>
-            <input class="postButton" type = "submit" value = "削除" name ="delete" />
-        
-            <?php if(!empty($_POST['delete'])):?>
-                    <form method ="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
-                    <h3>削除するためのパスワードを入力</h3>
-                        <input type="text" name ="pw_submit"/><br/>
- 
-                        <input class="postButton" type = "submit" value = "確認"  onclick="return confirm_form()"/>
-                        <input type="hidden" name = "number" value="<?php echo $_POST['delete_number']?>">
-                        <input type="hidden" name = "function" value ="<?php echo $_POST['delete']?>">
-                    </form>
-            <?php endif;?>
-        </form>
+    <?php if(!empty($message)): ?>
+        <h2 class="message"><?php echo $message; ?></h2>
+    <?php endif; ?>
 
 
-        <h3>編集対象番号</h3>
-        <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
-            <input type="text" name ="edit_number"/><br/>
-            <?php if(!empty($error_message_edit)): ?>
-                <ul class="error_message">
-                     <li class="error"><?php echo $error_message_edit; ?> </li>
-                </ul>
-            <?php endif; ?>
-            <input class="postButton" type = "submit" value = "編集" name="edit" />
-            
-            <?php if(!empty($_POST['edit'])):?>
-                <form method ="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
-                <h3>編集するためのパスワードを入力</h3>
-                    <input type="text" name ="pw_submit"/><br/>
-                    <input class="postButton" type = "submit" value = "確認"/>
-                    <input type="hidden" name = "number" value="<?php echo $_POST['edit_number']?>">
-                    <input type="hidden" name = "function" value ="<?php echo $_POST['edit']?>">
-                </form>
-            <?php endif;?>
+    <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
+    <div class="user_form">
+        <h3>ID</h3>
+            <input type = "text" name = "id" value="<?php if(!empty($input)){ echo $input['uid'];} ?>"  /><br/>
+    </div>
+    <h3>パスワード</h3>
+        <input type="text" name = "password" value="<?php if(!empty($input)){ echo $input['password'];} ?>" /><br />
+    
+    <label class="auto_login_radio"><input class="auto_login" type="radio" name = "rb" value = "auto">自動でログインする</label></br>
+    <input class="login_button" type="submit" name = "login" value="ログイン">
 
-            
-            <input type = "hidden" name = "pw_request" />
-        </form>
+    
+    </form>
 
-        <h2>過去の投稿</h2>
+    <h2>ユーザ一覧</h2>
             <?php 
-                $data = queryAll();
+                $data = queryAll("users");
                 if (empty($data)){
-                    print("現在投稿はありません");
+                    print("Not existing user");
                 }
                 foreach( $data as $key1 => $val1){
                     $output = $val1['id'];
@@ -191,34 +149,9 @@ function confirm_form() {
                     echo $output."<br/>";
                 }
             ?>
-    </body>
+
+</body>
 </html>
-
-
-
-
-
-<?php 
-
-?>
-
-<?php 
-    function writefile() {
-        $contents = file('data.txt', FILE_IGNORE_NEW_LINES);
-
-        $id = count($contents) + 1;
-        $name = $_POST['name'];
-        $comment = $_POST['comment'];
-        $date = date("Y-m-d H:i:s");
-        $password = $_POST['password'];
-
-        $row = $id."<>".$name."<>".$comment."<>".$date."<>".$password;
-
-        //ファイルの追記
-        $file = fopen('data.txt', 'a');
-        fwrite($file, $row."\n");
-    }    
-?>
 
 <?php 
     function connectDB(){
@@ -235,23 +168,9 @@ function confirm_form() {
         }
     }
 
-    function queryPost($id) {
+    function queryAll($table){
         $db = connectDB();
-        $stmt = $db -> prepare("SELECT * FROM posts WHERE id = :id");
-        $stmt -> execute(array(
-            ':id' => $id
-        ));
-        $results = $stmt -> fetchall(PDO::FETCH_ASSOC);
-        $count = $stmt -> rowCount();
-        if($count == 0){
-            print("something wrong");
-        }
-        return $results[0];
-    }
-
-    function queryAll(){
-        $db = connectDB();
-        $stmt = $db->query("SELECT * FROM posts");
+        $stmt = $db->query("SELECT * FROM ".$table);
         $results = $stmt->fetchall(PDO::FETCH_ASSOC);
         return $results;
     }
@@ -265,95 +184,52 @@ function confirm_form() {
         return $result[0];
     }
 
-    
-    function insert() {
+    function insert($uid) {
         $db = connectDB();
         $name = $_POST['name'];
-        $comment = $_POST['comment'];
-        $date = date("Y-m-d H:i:s");
         $password = $_POST['password'];
-        $sql = "INSERT INTO posts (
-            name, comment, update_datetime , pass
+        $sql = "INSERT INTO users (
+            uid, name, password, registered
         ) VALUES (
-            :name, :comment, :update_datetime, :pass
+            :uid, :name, :password, :registered
         )";
 
-        //実行準備
-        $stmt = $db -> prepare($sql);
-        //クエリのパラメータごとに値を組み込む
-        $stmt -> bindValue(':name', $name);
-        $stmt -> bindValue(':comment', $comment);
-        $stmt -> bindValue(':update_datetime', $date);
-        $stmt -> bindValue(':pass', $password);
-        //組み込んだ後にSQL文を実行
-        $stmt -> execute(); 
-    }
-
-    function update( $id ) {
-        $db = connectDB();
-        $date = date("Y-m-d H:i:s");
-        $sql = "UPDATE posts SET name = :name, comment = :comment, update_datetime = :update_datetime
-            WHERE id = :id";
         $stmt = $db -> prepare($sql);
         $stmt -> execute(array(
-            ':id' => $id,
-            ':name' => $_POST['name'],
-            ':comment' => $_POST['comment'],
-            ':update_datetime' => $date
-        ));
-        $count = $stmt -> rowCount();
-        if($count == 0){
-            print($id);
-        }
-
+            ':uid' => $uid,
+            ':name' => $name,
+            ':password' => $password,
+            ':registered' => TRUE
+        )); 
     }
 
-    function delete($id) {
+    function clearTable($table) {
         $db = connectDB();
-        $sql = "DELETE FROM posts WHERE id = :id";
+        $sql = "TRUNCATE table ".$table;
         $stmt = $db -> prepare($sql);
-        $stmt -> bindParam(':id', $id);
-
         $stmt -> execute();
-        $count = $stmt -> rowCount();
-
-        if ($count == 0){
-            print("データの削除に失敗しました");
-        }
-    }
-
-    function passCheck($id, $pw) {
-        $db = connectDB();
-        $stmt = $db -> prepare("SELECT pass FROM posts WHERE pass = :pass");
-        $stmt -> bindParam(':pass', $pw);
-        $stmt -> execute();
-        $count = $stmt -> rowCount();
-        if($count == 0){
-            return False;
-        } else {
-            return True;
-        }
-        
     }
 
 ?>
 
 
+
+
+
 <style>
+    input{
+        margin-bottom: 20px;
+    }
+    .message {
+        font-size:30;
+    }
     ul.error_message {
         color : red;
+        margin : 20px;
     }
-    textarea.commentbox {
-    text-align: top;
-    margin-bottom: 10px;
-    width: 200px;
-    height: 150px;
-    align-items: center;
-    text-align: left;
-    justify-content: center;
-    }
-    input.passwordform{
-        margin-bottom: 20px
-    }
-
+input.login_button {
+    width: 80px;
+    height: 40px;
+    margin-top: 30px;
+}
 </style>
