@@ -1,14 +1,12 @@
 <?php 
     session_start();
     if(isset($_COOKIE["auto_login"])){
-        print($_SESSION["uid"]);
+        
         $db = connectDB();
         $auto_login = $db->prepare(("SELECT * FROM auto_login WHERE auto_login_key=?"));
-        $auto_login->execute(array(htmlspecialchars($_COOKIE["auto_login"])));
+        $auto_login->execute(array($_SESSION["uid"]));
         $auto_login_info = $auto_login->fetch();
-        print($auto_login_info["uid"]);
-        $user = queryUser($auto_login_info["uid"]);
-        print(var_dump($user));
+        $user = queryUser($_SESSION["uid"]);
     }
     $user = queryUser($_SESSION["uid"]);
     
@@ -20,6 +18,7 @@ $error_message = array();
 $error_message_edit = null;
 
 
+
 if( !empty($_POST['btn_submit'])) {
     $func = str_replace("/", "",$_POST['btn_submit']);
 
@@ -29,6 +28,10 @@ if( !empty($_POST['btn_submit'])) {
 
         if (empty($_POST['comment']) ){
             $error_message[] = 'コメントを入力してください';
+        }
+
+        if($_FILES['upfile']['error'] == UPLOAD_ERR_NO_FILE){
+            $error_message[] = "ファイルが選択されていません";
         }
 
         //編集モード
@@ -45,8 +48,9 @@ if( !empty($_POST['btn_submit'])) {
                 insert();
             }
         }
-
 }
+
+
 
 
 
@@ -108,12 +112,16 @@ function confirm_form() {
                 </ul>
         <?php endif; ?>
 
-        <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
+        <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>" enctype="multipart/form-data" >
         <h3>名前</h3>
             <input type = "text" name = "name" value="<?php echo $user['name']; ?>"/><br/>
         <h3>コメント</h3>
             <div>
                 <textarea class="commentbox" type = "text" name = "comment" ><?php if(!empty($_POST['pw_submit']) && !empty($edit_data)){ echo $edit_data['comment'];}?></textarea><br/>
+            </div>
+            <div>
+                <input type="file" name="upfile">
+                
             </div>
             <h3>パスワード</h3>
             <input class="passwordform" type="text" name="password" value="" /></br>
@@ -176,7 +184,7 @@ function confirm_form() {
 
         <h2>過去の投稿</h2>
             <?php 
-                $data = queryAll();
+                /* $data = queryAll();
                 if (empty($data)){
                     print("現在投稿はありません");
                 }
@@ -189,6 +197,31 @@ function confirm_form() {
                         $output = $output.", ".$val2;
                     }
                     echo $output."<br/>";
+                } */
+                //DBから取得して表示する．
+                $db = connectDB();
+                $sql = "SELECT * FROM posts3 ORDER BY id;";
+                $stmt = $db->prepare($sql);
+                $stmt -> execute();
+                while ($row = $stmt -> fetch(PDO::FETCH_ASSOC)){
+                    echo ($row["id"]."<br/>");
+                    //動画と画像で場合分け
+                    $target = $row["fname"];
+                    $raw_data = $row["raw_data"];
+                    if($row["extension"] == "mp4"){
+                        $enc_video = base64_encode($raw_data);
+                        echo '<video width="600" height="400" controls="controls">
+                            <scource src="data:video/mp4;base64,'.base64_encode($raw_data).'"/>
+                        </video>';
+                        echo ("<video src=\"kadai_3_import_media.php?target=$target\" width=\"426\" height=\"240\" controls></video>");
+                    }
+                    elseif($row["extension"] == "jpeg" || $row["extension"] == "png" || $row["extension"] == "gif"){
+                        $encimg = base64_encode($raw_data);
+                        $imginfo = getimagesize('data:application/octet-stream;base64,' . $encimg);
+                        echo $imginfo['mime'];
+                        echo '<img src="data:'. $imginfo['mime'] . ';base64,' . $encimg . '" />';
+                    }
+                    echo ("<br/><br/>");
                 }
             ?>
     </body>
@@ -237,7 +270,7 @@ function confirm_form() {
 
     function queryPost($id) {
         $db = connectDB();
-        $stmt = $db -> prepare("SELECT * FROM posts WHERE id = :id");
+        $stmt = $db -> prepare("SELECT * FROM posts3 WHERE id = :id");
         $stmt -> execute(array(
             ':id' => $id
         ));
@@ -251,7 +284,7 @@ function confirm_form() {
 
     function queryAll(){
         $db = connectDB();
-        $stmt = $db->query("SELECT * FROM posts");
+        $stmt = $db->query("SELECT id, name, comment, update_datetime, password, fname, extension FROM posts3");
         $results = $stmt->fetchall(PDO::FETCH_ASSOC);
         return $results;
     }
@@ -270,29 +303,78 @@ function confirm_form() {
         $db = connectDB();
         $name = $_POST['name'];
         $comment = $_POST['comment'];
-        $date = date("Y-m-d H:i:s");
+        $datetime = date("Y-m-d H:i:s");
         $password = $_POST['password'];
-        $sql = "INSERT INTO posts (
-            name, comment, update_datetime , pass
+
+        //ファイル処理----------------------------------
+        if (isset($_FILES['upfile']['error']) && is_int($_FILES['upfile']['error']) && $_FILES["upfile"]["name"] !== ""){
+            //エラーチェック
+            switch ($_FILES['upfile']['error']) {
+                case UPLOAD_ERR_OK: // OK
+                    break;
+                case UPLOAD_ERR_NO_FILE:   // 未選択
+                    throw new RuntimeException('ファイルが選択されていません', 400);
+                case UPLOAD_ERR_INI_SIZE:  // php.ini定義の最大サイズ超過
+                    throw new RuntimeException('ファイルサイズが大きすぎます', 400);
+                default:
+                    throw new RuntimeException('その他のエラーが発生しました', 500);
+            }
+            //画像・動画をバイナリデータにする．
+            $raw_data = file_get_contents($_FILES['upfile']['tmp_name']);
+        }
+        //拡張子を見る
+        $tmp = pathinfo($_FILES["upfile"]["name"]);
+        $extension = $tmp["extension"];
+        if($extension === "jpg" || $extension === "jpeg" || $extension === "JPG" || $extension === "JPEG"){
+            $extension = "jpeg";
+        }
+        elseif($extension === "png" || $extension === "PNG"){
+            $extension = "png";
+        }
+        elseif($extension === "gif" || $extension === "GIF"){
+            $extension = "gif";
+        }
+        elseif($extension === "mp4" || $extension === "MP4"){
+            $extension = "mp4";
+        }
+        else{
+            echo "非対応ファイルです．<br/>";
+            //echo ("<a href=\"index.php\">戻る</a><br/>");
+            //exit(1);
+        }
+        //DBに格納するファイルネーム設定
+        //サーバー側の一時的なファイルネームと取得時刻を結合した文字列にsha256をかける．
+        $date = getdate();
+        $fname = $_FILES["upfile"]["tmp_name"].$date["year"].$date["mon"].$date["mday"].$date["hours"].$date["minutes"].$date["seconds"];
+        $fname = hash("sha256", $fname);
+
+        //画像・動画をDBに格納．
+
+        $sql = "INSERT INTO posts3 (
+            name, comment, update_datetime , password, fname, extension, raw_data
         ) VALUES (
-            :name, :comment, :update_datetime, :pass
+            :name, :comment, :update_datetime, :password, :fname, :extension, :raw_data
         )";
 
         //実行準備
         $stmt = $db -> prepare($sql);
         //クエリのパラメータごとに値を組み込む
-        $stmt -> bindValue(':name', $name);
-        $stmt -> bindValue(':comment', $comment);
-        $stmt -> bindValue(':update_datetime', $date);
-        $stmt -> bindValue(':pass', $password);
-        //組み込んだ後にSQL文を実行
-        $stmt -> execute(); 
+        $stmt -> bindParam(':name', $name);
+        $stmt -> bindParam(':comment', $comment);
+        $stmt -> bindParam(':password', $password);
+        $stmt -> bindParam(':update_datetime', $datetime);
+        $stmt -> bindParam(':fname', $fname, PDO::PARAM_STR);
+        $stmt -> bindParam(':extension', $extension, PDO::PARAM_STR);
+        $stmt -> bindParam(':raw_data', $raw_data, PDO::PARAM_STR);
+
+        $stmt -> execute();
+
     }
 
     function update( $id ) {
         $db = connectDB();
         $date = date("Y-m-d H:i:s");
-        $sql = "UPDATE posts SET name = :name, comment = :comment, update_datetime = :update_datetime
+        $sql = "UPDATE posts3 SET name = :name, comment = :comment, update_datetime = :update_datetime
             WHERE id = :id";
         $stmt = $db -> prepare($sql);
         $stmt -> execute(array(
@@ -310,7 +392,7 @@ function confirm_form() {
 
     function delete($id) {
         $db = connectDB();
-        $sql = "DELETE FROM posts WHERE id = :id";
+        $sql = "DELETE FROM posts3 WHERE id = :id";
         $stmt = $db -> prepare($sql);
         $stmt -> bindParam(':id', $id);
 
@@ -324,7 +406,7 @@ function confirm_form() {
 
     function passCheck($id, $pw) {
         $db = connectDB();
-        $stmt = $db -> prepare("SELECT pass FROM posts WHERE pass = :pass");
+        $stmt = $db -> prepare("SELECT pass FROM posts3 WHERE pass = :pass");
         $stmt -> bindParam(':pass', $pw);
         $stmt -> execute();
         $count = $stmt -> rowCount();
