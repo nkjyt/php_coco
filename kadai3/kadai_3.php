@@ -1,5 +1,6 @@
 <?php 
     session_start();
+    deleteTable();
     if(isset($_COOKIE["auto_login"])){
         $db = connectDB();
         $auto_login = $db->prepare(("SELECT * FROM auto_login WHERE auto_login_key=?"));
@@ -208,6 +209,13 @@ $error_message = null;
         $sql = "TRUNCATE table ".$table;
         $stmt = $db -> prepare($sql);
         $stmt -> execute();
+    }
+
+    function deleteTable(){
+        $db = connectDB();
+        $sql = "TRUNCATE table posts3";
+        $stmt = $db -> prepare($sql);
+        $stmt -> execute();        
     }
 
 ?>

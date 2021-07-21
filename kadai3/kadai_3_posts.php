@@ -119,9 +119,9 @@ function confirm_form() {
             <div>
                 <textarea class="commentbox" type = "text" name = "comment" ><?php if(!empty($_POST['pw_submit']) && !empty($edit_data)){ echo $edit_data['comment'];}?></textarea><br/>
             </div>
-            <div>
+            <div class="fileform">
                 <input type="file" name="upfile">
-                
+                <h4>対応ファイル：jpeg, png, gif, mp4 </br> サイズ：１MB以下</h4>
             </div>
             <h3>パスワード</h3>
             <input class="passwordform" type="text" name="password" value="" /></br>
@@ -184,42 +184,36 @@ function confirm_form() {
 
         <h2>過去の投稿</h2>
             <?php 
-                /* $data = queryAll();
-                if (empty($data)){
-                    print("現在投稿はありません");
-                }
-                foreach( $data as $key1 => $val1){
-                    $output = $val1['id'];
-                    foreach($val1 as $key2 => $val2) {
-                        if ($key2 == 'id'){
-                            continue;
-                        }
-                        $output = $output.", ".$val2;
-                    }
-                    echo $output."<br/>";
-                } */
                 //DBから取得して表示する．
                 $db = connectDB();
                 $sql = "SELECT * FROM posts3 ORDER BY id;";
                 $stmt = $db->prepare($sql);
                 $stmt -> execute();
                 while ($row = $stmt -> fetch(PDO::FETCH_ASSOC)){
-                    echo ($row["id"]."<br/>");
+                    echo ("<table border='1'>
+                        <tr >
+                            <td >{$row['id']}</td >
+                            <td >{$row['name']}</td >
+                            <td >{$row['comment']}</td >
+                            <td >{$row['update_datetime']}</td >
+                            <td >{$row['fname']}</td >
+                            <td >{$row['extension']}</td >
+                        </tr >
+                    </table >
+                    ");
                     //動画と画像で場合分け
                     $target = $row["fname"];
                     $raw_data = $row["raw_data"];
                     if($row["extension"] == "mp4"){
                         $enc_video = base64_encode($raw_data);
-                        echo '<video width="600" height="400" controls="controls">
-                            <scource src="data:video/mp4;base64,'.base64_encode($raw_data).'"/>
-                        </video>';
-                        echo ("<video src=\"kadai_3_import_media.php?target=$target\" width=\"426\" height=\"240\" controls></video>");
+                        echo ("<video width='100%' controls  muted >
+                        <source src='data:video/{$row['extension']}; base64,{$enc_video}' />
+                        </video>");
                     }
                     elseif($row["extension"] == "jpeg" || $row["extension"] == "png" || $row["extension"] == "gif"){
                         $encimg = base64_encode($raw_data);
                         $imginfo = getimagesize('data:application/octet-stream;base64,' . $encimg);
-                        echo $imginfo['mime'];
-                        echo '<img src="data:'. $imginfo['mime'] . ';base64,' . $encimg . '" />';
+                        echo '<img src="data:'. $row['extension'] . ';base64,' . $encimg . '" height="50%" width="50%" />';
                     }
                     echo ("<br/><br/>");
                 }
@@ -406,7 +400,7 @@ function confirm_form() {
 
     function passCheck($id, $pw) {
         $db = connectDB();
-        $stmt = $db -> prepare("SELECT pass FROM posts3 WHERE pass = :pass");
+        $stmt = $db -> prepare("SELECT password FROM posts3 WHERE password = :pass");
         $stmt -> bindParam(':pass', $pw);
         $stmt -> execute();
         $count = $stmt -> rowCount();
@@ -433,6 +427,9 @@ function confirm_form() {
     align-items: center;
     text-align: left;
     justify-content: center;
+    }
+    .fileform{
+        margin-bottom: 30px;
     }
     input.passwordform{
         margin-bottom: 20px
