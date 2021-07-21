@@ -7,6 +7,7 @@ $error_message = null;
     if(!empty($_POST['register'])){
         $name = $_POST['name'];
         $pass = $_POST['password'];
+        $mail = $_POST['mail'];
 
         if(empty($_POST['name'])){
             $error_message = "ユーザー名が入力されていません";
@@ -24,10 +25,11 @@ $error_message = null;
         if(empty($error_message)){
             //DB確認
             
-            $sql = "SELECT id FROM user WHERE mail=:mail";
+            $sql = "SELECT id FROM users WHERE mail=:mail";
             $stmt = $db -> prepare($sql);
             $stmt -> bindValue(':mail', $mail, PDO::PARAM_STR);
             $stmt -> execute();
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if(isset($result["id"])){
                 $error_message = "このメールアドレスはすでに利用されています。";
             }  
@@ -38,7 +40,7 @@ $error_message = null;
             $url = "http://co-19-356.99sv-coco.com/kadai3/kadai_4.php?urltoken=".$uid;
             try{
                 insert($uid);
-                $message = "メールアドレスに認証メールを送信しました。<br />24時間以内に認証をしてください。<br />"/$url; 
+                $message = "メールアドレスに認証メールを送信しました。<br />24時間以内に認証をしてください。<br />".$url; 
             }catch (PDOException $e){
                  print('Error:'.$e->getMessage());
                  die();
