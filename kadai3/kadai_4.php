@@ -1,4 +1,5 @@
 <?php
+
 $error_message = null;
 
     //clearTable("users");
@@ -24,7 +25,6 @@ $error_message = null;
 
         if(empty($error_message)){
             //DB確認
-            
             $sql = "SELECT id FROM users WHERE mail=:mail";
             $stmt = $db -> prepare($sql);
             $stmt -> bindValue(':mail', $mail, PDO::PARAM_STR);
@@ -40,10 +40,18 @@ $error_message = null;
             $url = "http://co-19-356.99sv-coco.com/kadai3/kadai_4.php?urltoken=".$uid;
             try{
                 insert($uid);
-                $message = "メールアドレスに認証メールを送信しました。<br />24時間以内に認証をしてください。<br />".$url; 
             }catch (PDOException $e){
                  print('Error:'.$e->getMessage());
                  die();
+            }
+            $mailTo = $mail;
+            $subject = "Please verification you email !";
+            $body = "Thank you for register! Please verify you email from {$url}";
+            mb_language('ja');
+            mb_internal_encoding("UTF-8");
+            $header = "Form:nkjmyut0511@gmail.com";
+            if(mb_send_mail($mailTo, $subject, $body, $header)){
+                $message = "メールアドレスに認証メールを送信しました。<br />24時間以内に認証をしてください。<br />"; 
             }
         }
     }
@@ -73,7 +81,7 @@ $error_message = null;
     <?php endif; ?>
 
 
-    <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>">
+    <form method="POST" action="<?php print($_SERVER['PHP_SELF']) ?>" >
     <div class="user_form">
         <h3>ユーザー名 : <input type = "text" name = "name" /></h3>
     </div>
