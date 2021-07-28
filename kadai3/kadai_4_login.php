@@ -1,5 +1,6 @@
 <?php 
     session_start();
+    
     deleteTable();
     if(isset($_COOKIE["auto_login"])){
         $db = connectDB();

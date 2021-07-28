@@ -14,10 +14,12 @@ session_start();
             if($count == 0){
                 $error_message = "URLが無効です";
             } else {
-                $_SESSION['registered_message'] = "本登録が完了しました";
+                echo ('本登録が完了しました<br />');
+                echo (' <a href="http://co-19-356.99sv-coco.com/kadai3/kadai_4_login.php">ログイン画面はこちら</a>');
+
             }
         }
-        header("Location: http://co-19-356.99sv-coco.com/kadai3/kadai_4_login.php");        
+        //header("Location: http://co-19-356.99sv-coco.com/kadai3/kadai_4_login.php");        
     }
 ?>
 
@@ -118,6 +120,9 @@ $error_message = null;
     <input class="register_button" type="submit" name = "register" value="登録">
     </form>
 
+    <a href="http://co-19-356.99sv-coco.com/kadai3/kadai_4_login.php">ログイン画面</a><br />
+
+
     <h2>ユーザ一覧</h2>
             <?php 
                 $data = queryAll("users");
@@ -183,8 +188,9 @@ $error_message = null;
     }
 
     function isRegistered($uid){
+        echo $uid;
         $db = connectDB();
-        $sql = "SELECT registered FROM users WHERE uid = :uid";
+        $sql = "SELECT * FROM users WHERE uid = :uid";
         $stmt = $db -> prepare($sql);
         $stmt -> execute(array(':uid' => $uid));
         $result = $stmt -> fetchAll(PDO::FETCH_ASSOC);
@@ -221,6 +227,7 @@ $error_message = null;
 input.register_button {
     width: 50px;
     height: 30px;
-    margin-top: 30px;
+    margin-top: 20px;
+    margin-bottom: 30px;
 }
 </style>
