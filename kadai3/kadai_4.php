@@ -1,4 +1,27 @@
 <?php
+session_start();
+    if(!empty($_GET['urltoken'])){
+        $id = $_GET['urltoken'];
+        $db = connectDB();
+        if (!isRegistered($id)){
+            $sql = "UPDATE users SET registered = :registered WHERE uid = :uid";
+            $stmt = $db -> prepare($sql);
+            $stmt -> execute(array(
+                ':uid' => $id,
+                ':registered' => true,
+            ));
+            $count = $stmt -> rowCount();
+            if($count == 0){
+                $error_message = "URLが無効です";
+            } else {
+                $_SESSION['registered_message'] = "本登録が完了しました";
+            }
+        }
+        header("Location: http://co-19-356.99sv-coco.com/kadai3/kadai_4_login.php");        
+    }
+?>
+
+<?php
 
 $error_message = null;
 
@@ -155,8 +178,17 @@ $error_message = null;
             ':name' => $name,
             ':mail' => $mail,
             ':password' => $password,
-            ':registered' => TRUE
+            ':registered' => false
         )); 
+    }
+
+    function isRegistered($uid){
+        $db = connectDB();
+        $sql = "SELECT registered FROM users WHERE uid = :uid";
+        $stmt = $db -> prepare($sql);
+        $stmt -> execute(array(':uid' => $uid));
+        $result = $stmt -> fetchAll(PDO::FETCH_ASSOC);
+        return $result[0]['registered'];
     }
 
     function clearTable($table) {
