@@ -31,22 +31,26 @@
         ) engine=innodb default charset=utf8';
         $create = $dbh->query($createsql); */
 
+        //カラムを追加
+        $addsql = 'ALTER TABLE users ADD update_time DATETIME AFTER password';
+        $create = $dbh->query($addsql); 
+
          //テーブル一覧
          $stmt = $dbh -> query('SHOW TABLES');
          while($re = $stmt -> fetch(PDO::FETCH_ASSOC)){
              var_dump($re);
 
- /*             //削除
-        $sql = "TRUNCATE table posts3";
-        $stmt = $dbh -> prepare($sql);
-        $stmt -> execute(); */
-
-        $sql = "SET GLOBAL max_allowed_packet=16777216";
-        $sql = "SHOW VARIABLES LIKE 'max_allowed_packet'";
+             //削除
+        $sql = "TRUNCATE table users";
         $stmt = $dbh -> prepare($sql);
         $stmt -> execute();
 
-        //$result = queryAll("auto_login");
+/*         $sql = "SET GLOBAL max_allowed_packet=16777216";
+        $sql = "SHOW VARIABLES LIKE 'max_allowed_packet'";
+        $stmt = $dbh -> prepare($sql);
+        $stmt -> execute(); */
+
+        //$result = queryAll("posts3");
         //print(var_dump($result));
             
 /*         $createsql = 'CREATE TABLE auto_login (
@@ -66,7 +70,7 @@
     
     function queryAll($table){
         $db = connectDB();
-        $stmt = $db->query("SELECT * FROM ".$table);
+        $stmt = $db->query("SELECT id, name, comment, password, fname, extension FROM ".$table);
         $results = $stmt->fetchall(PDO::FETCH_ASSOC);
         return $results;
     }
