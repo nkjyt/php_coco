@@ -19,7 +19,6 @@ session_start();
 
             }
         }
-        //header("Location: http://co-19-356.99sv-coco.com/kadai3/kadai_4_login.php");        
     }
 ?>
 
@@ -50,14 +49,18 @@ $error_message = null;
 
         if(empty($error_message)){
             //DB確認
-            $sql = "SELECT id FROM users WHERE mail=:mail";
+            $sql = "SELECT id, uid FROM users WHERE mail=:mail";
             $stmt = $db -> prepare($sql);
             $stmt -> bindValue(':mail', $mail, PDO::PARAM_STR);
             $stmt -> execute();
             $result = $stmt->fetch(PDO::FETCH_ASSOC);
             if(isset($result["id"])){
                 $error_message = "このメールアドレスはすでに利用されています。";
-            }  
+            }
+            if(isRegistered($result["uid"])){
+                $error_message = "このメールアドレスは本登録されていません。";
+            }
+            
         }
         if(empty($error_message)){
             //ID生成、登録処理
@@ -171,10 +174,11 @@ $error_message = null;
         $name = $_POST['name'];
         $mail = $_POST['mail'];
         $password = $_POST['password'];
+        $datetime = date("Y-m-d H:i:s");
         $sql = "INSERT INTO users (
-            uid, name, mail, password, registered
+            uid, name, mail, password, update_time, registered
         ) VALUES (
-            :uid, :name, :mail, :password, :registered
+            :uid, :name, :mail, :password, :update_time, :registered
         )";
 
         $stmt = $db -> prepare($sql);
@@ -183,12 +187,12 @@ $error_message = null;
             ':name' => $name,
             ':mail' => $mail,
             ':password' => $password,
+            ':update_time' => $datetime,
             ':registered' => false
         )); 
     }
 
     function isRegistered($uid){
-        echo $uid;
         $db = connectDB();
         $sql = "SELECT * FROM users WHERE uid = :uid";
         $stmt = $db -> prepare($sql);
