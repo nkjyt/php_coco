@@ -1,0 +1,3 @@
+{* Smarty *}
+
+こんにちは、{$name}。ようこそSmartyへ！
