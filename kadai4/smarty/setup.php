@@ -17,10 +17,10 @@ class Smarty_coco extends Smarty {
 
         $this->Smarty();
 
-        $this->template_dir = '/home/co-19-356.99sv-coco.com/public_html/coco/templates/';
-        $this->compile_dir  = '/home/co-19-356.99sv-coco.com/public_html/coco/templates_c/';
-        $this->config_dir   = '/home/co-19-356.99sv-coco.com/public_html/coco/configs/';
-        $this->cache_dir    = '/home/co-19-356.99sv-coco.com/public_html/coco/cache/';
+        $this->template_dir = '/home/co-19-356.99sv-coco.com/public_html/kadai4/smarty/templates/';
+        $this->compile_dir  = '/home/co-19-356.99sv-coco.com/public_html/kadai4/smarty/templates_c/';
+        $this->config_dir   = '/home/co-19-356.99sv-coco.com/public_html/kadai4/smarty/configs/';
+        $this->cache_dir    = '/home/co-19-356.99sv-coco.com/public_html/kadai4/smarty/cache/';
 
         $this->caching = true;
         $this->assign('app_name', 'coco');
