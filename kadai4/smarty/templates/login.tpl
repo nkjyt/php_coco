@@ -13,7 +13,7 @@
             <input type="text" name="id" value="" />
 
             <h3>パスワード</h3>
-            <input type="text" name="password" value="">
+            <input type="text" name="password" value=""></br>
 
             <label class="auto_login_radio"><input class="auto_login" type="radio" name = "rb" value = "auto">自動でログインする</label></br>
             <input class="login_button" type="submit" name = "login" value="ログイン">
@@ -35,3 +35,14 @@
         {/if}
     </body>
 </html>
+
+<style>
+    input{
+        margin-bottom: 20px;
+    }
+    input.login_button {
+    width: 80px;
+    height: 40px;
+    margin-top: 30px;
+}
+</style>
