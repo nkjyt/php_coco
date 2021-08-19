@@ -5,10 +5,10 @@
     </head>
     <body>
         <h1 class="title">ログインフォーム</h1>
-        {if !empty($error_message)}<p class="error">{$error_message}</p></br>
+        {if !empty($smarty.get.error)}<p class="error">{$smarty.get.error}</p></br>
         {/if}
 
-        <form method="POST" action="../../login_form.php">
+        <form method="POST" action="./login_form.php">
             <h3>ID</h3>
             <input type="text" name="id" value="" />
 
