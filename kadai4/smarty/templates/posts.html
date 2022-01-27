@@ -1,0 +1,66 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>{$title}</title>
+    </head>
+    <body>
+        <h1>簡易掲示板</h1>
+
+        <form method="POST" action="posts_form.php" enctype="multipart/form-data">
+            <h3>名前</h3>
+                <input type = "text" name = "name" value="{$name}"/><br/>
+            <h3>コメント</h3>
+            <div>
+                <textarea class="commentbox" type = "text" name = "comment" ></textarea><br/>
+            </div>
+            <div class="fileform">
+                <input type="file" name="upfile">
+                <h4>対応ファイル：jpeg, png, gif, mp4 </br> サイズ：１MB以下</h4>
+            </div>
+            <h3>パスワード</h3>
+            <input class="passwordform" type="text" name="password" value="" /></br>
+            <input class="postButton" type = "submit" value = "<?php if(empty($_POST['pw_submit'])){echo "投稿";} else {echo "編集";} ?>" name ="btn_submit"/>
+            <input type="hidden" name="editted" value=<?php if(!empty($edit_data)){ echo $edit_data['id']; }?> />
+        </form>
+
+        <h3>削除対象番号</h3>
+        <form method="POST" action="./delete_form.php" >
+            <input type="text" name ="delete_number"/><br/>
+            <input class="postButton" type = "submit" value = "削除" name ="delete" />
+
+            {if !empty($smaty.post.delete)}
+                <form method ="POST" action="./delete_form.php">
+                <h3>削除するためのパスワードを入力</h3>
+                    <input type="text" name ="pw_submit"/><br/>
+
+                    <input class="postButton" type = "submit" value = "確認"  onclick="return confirm_form()"/>
+                    <input type="hidden" name = "number" value="{$smarty.post.delete_number}">
+                    <input type="hidden" name = "function" value ="{$smaty.post.delete}">
+                </form>
+            {/if}
+        </form>
+
+        <h3>編集対象番号</h3>
+        <form method="POST" action="./edit_form.php" >
+            <input type="text" name ="edit_number"/><br/>
+            <input class="postButton" type = "submit" value = "編集" name ="edit" />
+
+            {if !empty($smatry.post.edit)}
+                <form method ="POST" action="./edit_form.php">
+                <h3>削除するためのパスワードを入力</h3>
+                    <input type="text" name ="pw_submit"/><br/>
+
+                    <input class="postButton" type = "submit" value = "確認" />
+                    <input type="hidden" name = "number" value="{$smaty.post.edit_number}">
+                    <input type="hidden" name = "function" value ="{$smaty.post.edit}">
+                </form>
+            {/if}
+            <input type="hidden" name ="pw_request">
+
+        </form>
+
+
+        <h2>過去の投稿</h2>
+        
+    </body>
+</html>
